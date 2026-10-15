@@ -65,7 +65,8 @@ export function AuthScreen() {
         const { data, error } = await db().auth.signUp({
           email: email.trim(),
           password,
-          options: { emailRedirectTo: window.location.origin },
+          // The desktop app's app:// origin can't be opened from an email, so it falls back to the Site URL.
+          options: { emailRedirectTo: window.location.protocol.startsWith('http') ? window.location.origin : undefined },
         });
         if (error) throw error;
         if (!data.session) {

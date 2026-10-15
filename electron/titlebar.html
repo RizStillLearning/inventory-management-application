@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- No scripts: titlebar-preload.cts wires up the buttons. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Stockroom</title>
+    <style>
+      /* Colors match the tokens in src/styles.css. */
+      :root {
+        color-scheme: light;
+        --bar: #fcfcfb; /* --surface */
+        --hover: #ebeae5;
+        --pressed: #e1e0d9;
+        --ink: #0b0b0b;
+        --muted: #74726c;
+        --hairline: #e1e0d9;
+        --close: #c42b1c;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bar: #1a1a19;
+          --hover: #2c2c2a;
+          --pressed: #363633;
+          --ink: #f0efec;
+          --muted: #9a988f;
+          --hairline: #2c2c2a;
+        }
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        display: flex;
+        align-items: stretch;
+        background: var(--bar);
+        border-bottom: 1px solid var(--hairline);
+        color: var(--ink);
+        font: 500 12.5px/1 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        user-select: none;
+        /* Dragging anywhere but the buttons moves the window. */
+        -webkit-app-region: drag;
+      }
+
+      .title {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        padding-left: 14px;
+        color: var(--muted);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .is-blurred .title,
+      .is-blurred .controls {
+        opacity: 0.6;
+      }
+
+      .controls {
+        display: flex;
+        -webkit-app-region: no-drag;
+      }
+      .controls button {
+        width: 46px;
+        border: 0;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        background: transparent;
+        color: var(--ink);
+      }
+      .controls button:hover {
+        background: var(--hover);
+      }
+      .controls button:active {
+        background: var(--pressed);
+      }
+      .controls .close:hover,
+      .controls .close:active {
+        background: var(--close);
+        color: #fff;
+      }
+      .controls svg {
+        width: 10px;
+        height: 10px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1;
+        shape-rendering: crispEdges;
+      }
+      .controls .close svg {
+        shape-rendering: auto;
+      }
+      .restore,
+      .is-maximized .maximize {
+        display: none;
+      }
+      .is-maximized .restore {
+        display: block;
+      }
+
+      /* macOS draws its own traffic-light buttons on the left. */
+      [data-platform='darwin'] .title {
+        padding-left: 80px;
+      }
+      [data-platform='darwin'] .controls {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title">Stockroom</div>
+    <div class="controls">
+      <button type="button" data-action="minimize" title="Minimize" aria-label="Minimize">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 5.5h10" /></svg>
+      </button>
+      <button type="button" data-action="maximize" title="Maximize" aria-label="Maximize">
+        <svg class="maximize" viewBox="0 0 10 10" aria-hidden="true"><path d="M.5.5h9v9h-9z" /></svg>
+        <svg class="restore" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5V.5h7v7h-2M.5 2.5h7v7h-7z" /></svg>
+      </button>
+      <button type="button" class="close" data-action="close" title="Close" aria-label="Close">
+        <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M.5.5l9 9m0-9-9 9" /></svg>
+      </button>
+    </div>
+  </body>
+</html>
