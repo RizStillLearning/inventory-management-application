@@ -1,6 +1,6 @@
 # Stockroom: inventory management on Supabase
 
-A React + TypeScript single-page app for tracking products, stock levels, and every stock movement. Data lives in Supabase (Postgres + Auth + Realtime).
+A React + TypeScript single-page app for tracking products, stock levels, and every stock movement. Data lives in Supabase (Postgres + Auth + Realtime). It runs in the browser or as an Electron desktop app (see [Desktop app](#desktop-app)).
 
 ## Features
 
@@ -63,7 +63,7 @@ npm run dev
 
 Open http://localhost:5173, create an account, and sign in.
 
-> Requires Node 18+. On Node 18, `npm install` prints an `EBADENGINE` warning for `@supabase/supabase-js`. That warning is harmless here, because the library runs in the browser, not in Node. Node 20+ makes it go away.
+> Requires Node 22.12 or newer, which Electron and its build tools need.
 
 ## Scripts
 
@@ -72,15 +72,63 @@ Open http://localhost:5173, create an account, and sign in.
 | `npm run dev` | Start the dev server with hot reload |
 | `npm run build` | Type-check and build static files into `dist/` |
 | `npm run preview` | Serve the production build locally |
-| `npm run typecheck` | Type-check only |
+| `npm run typecheck` | Type-check the app and the Electron main process |
+| `npm run electron:dev` | Open the desktop app against the dev server, with hot reload |
+| `npm run electron:build` | Build the desktop installers into `release/` |
 
 ## Deploying
 
 `npm run build` produces a static site in `dist/` that any static host can serve (Netlify, Vercel, Cloudflare Pages, GitHub Pages, S3). Set the same `VITE_*` environment variables in the host's build settings, then add the deployed URL to **Authentication → URL Configuration → Redirect URLs** in Supabase.
 
+## Desktop app
+
+The same app runs as an Electron desktop app. It talks to the same Supabase project, so desktop and browser users share one inventory and see each other's changes live.
+
+### Develop
+
+```bash
+npm run electron:dev
+```
+
+This starts the Vite dev server and opens the app in a desktop window. Changes under `src/` hot-reload in the window. Changes to `electron/main.ts` need a restart: close the window and run the command again.
+
+### Build installers
+
+```bash
+npm run electron:build
+```
+
+Installers land in `release/`. Build on the system you are targeting:
+
+| Built on | Output |
+|---|---|
+| Linux | `Stockroom-<version>.AppImage` and `inventory-management_<version>_amd64.deb` |
+| Windows | `Stockroom Setup <version>.exe` |
+| macOS | a `Stockroom-<version>…dmg` disk image |
+
+On Ubuntu, install the `.deb` (`sudo apt install ./release/inventory-management_*.deb`). It adds Stockroom to the app launcher and sets up the AppArmor profile that Ubuntu 24.04+ needs for Electron's sandbox. To run the AppImage instead, install FUSE 2 first: `sudo apt install libfuse2t64`.
+
+The installers aren't code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first launch. Sign them before handing them to other people.
+
+### Things to know
+
+- **`.env` is baked in at build time.** The Supabase URL, key and currency settings are compiled into the app, so rebuild after changing `.env`. Use the publishable/anon key only, as for the web build.
+- **Email confirmation.** A confirmation link opens in the user's browser, not the desktop app. The link still confirms the account, and the user then signs in in the app. To skip this step, turn off **Confirm email** in Supabase. Otherwise, point **Site URL** at a page that makes sense to land on.
+- **Sign-in is remembered** per computer, in the app's data folder (for example `~/.config/Stockroom` on Linux).
+- **Title bar.** The window draws its own title bar with minimize, maximize and close buttons, so they appear even on desktops like GNOME that show only a close button by default. On macOS the usual traffic-light buttons stay on the left. The title bar is a separate page from the app, so the buttons keep working while a dialog is open. Press F11 (or **View → Toggle Full Screen**) for full screen.
+- **Security.** The built app is served from a private `app://stockroom/` origin with a Content Security Policy. Pages have no Node.js access, and links to other sites or `mailto:` open in the system browser or mail app.
+
 ## Project layout
 
 ```
+electron/
+  main.ts               desktop window, app:// protocol, CSP, external links, menu
+  titlebar.html         the window's title bar and its minimize/maximize/close buttons
+  titlebar-preload.cts  connects the title bar buttons to the window
+build/
+  icon.png              desktop app icon (electron-builder makes the platform formats from it)
+scripts/
+  electron-dev.js       runs Vite + Electron together for npm run electron:dev
 supabase/
   schema.sql            tables, stock trigger, privileges, row level security, realtime
   seed.sql              optional sample data
