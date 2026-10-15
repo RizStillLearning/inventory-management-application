@@ -43,6 +43,7 @@
       "!node_modules/**/*"
     ],
     "linux": {
+      "icon": "build/icons",
       "syncDesktopName": true,
       "target": [
         "AppImage",

@@ -126,7 +126,8 @@ electron/
   titlebar.html         the window's title bar and its minimize/maximize/close buttons
   titlebar-preload.cts  connects the title bar buttons to the window
 build/
-  icon.png              desktop app icon (electron-builder makes the platform formats from it)
+  icon.png              desktop app icon for Windows and macOS (electron-builder makes .ico/.icns from it)
+  icons/                the same icon at the standard Linux sizes, 16x16 to 512x512
 scripts/
   electron-dev.js       runs Vite + Electron together for npm run electron:dev
 supabase/
