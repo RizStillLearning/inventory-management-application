@@ -10,8 +10,8 @@ A React + TypeScript single-page app for tracking products, stock levels, and ev
 - **Product drawer**: details, quick stock actions, and recent history for one product.
 - **Stock history**: the full ledger, filterable by product, type, and date range, with CSV export.
 - **Categories & suppliers**: CRUD, showing product counts, stock value, and how many products need reordering.
-- **Live updates**: when someone else changes stock, every open browser refreshes (Supabase Realtime).
-- **Email/password sign-in**. Signed-in users share one inventory, and anonymous visitors can't read or write anything.
+- **Live updates**: when stock changes in another window or on another device signed in to the same account, the app refreshes (Supabase Realtime).
+- **Email/password sign-in**. Every account has its own private inventory, and a new account starts empty. Anonymous visitors can't read or write anything.
 
 ## How stock stays correct
 
@@ -20,6 +20,7 @@ A React + TypeScript single-page app for tracking products, stock levels, and ev
 - Quantity can't go below zero. A shipment larger than what's on hand is rejected, even when two people ship at the same moment.
 - Signed-in users have no privilege to update `products.quantity`, or to edit or delete ledger rows.
 - `created_by` and `created_by_email` are filled in from the user's login token and can't be faked.
+- Every row has an `owner_id`, also filled in from the login token. Row level security limits each account to its own rows. A product can only use categories and suppliers from the same inventory, and stock movements only apply to the account's own products.
 
 ## Setup
 
@@ -27,9 +28,11 @@ A React + TypeScript single-page app for tracking products, stock levels, and ev
 
 1. Create a project at [supabase.com](https://supabase.com) (the free tier is fine).
 2. In the dashboard, open **SQL Editor → New query**, paste the contents of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**.
-3. Optional: run [`supabase/seed.sql`](supabase/seed.sql) the same way to load sample categories, suppliers, products, and history.
+3. Optional: run [`supabase/seed.sql`](supabase/seed.sql) the same way to load sample categories, suppliers, products, and history. The samples go into one account's inventory, so sign up in the app first and put that account's email at the top of the file.
 
 Both scripts are safe to run more than once.
+
+**Upgrading a database from before each account had its own inventory:** run the new `schema.sql` again. Its existing rows become the inventory of the admin account named in the script's upgrade block (`harrisk2606@gmail.com`), and every other account starts empty. That account must already exist. If it doesn't, the script stops without changing anything.
 
 ### 2. Configure auth
 
@@ -82,7 +85,7 @@ Open http://localhost:5173, create an account, and sign in.
 
 ## Desktop app
 
-The same app runs as an Electron desktop app. It talks to the same Supabase project, so desktop and browser users share one inventory and see each other's changes live.
+The same app runs as an Electron desktop app. It talks to the same Supabase project, so an account sees the same inventory on the desktop and in the browser, with changes showing up live in both.
 
 ### Develop
 

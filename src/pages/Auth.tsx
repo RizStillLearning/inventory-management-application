@@ -91,7 +91,7 @@ export function AuthScreen() {
           <span>Stockroom</span>
         </div>
         <h1>{signup ? 'Create an account' : 'Sign in'}</h1>
-        <p className="muted">{signup ? 'Everyone who signs up shares the same inventory.' : 'Track products, stock levels and every movement in one place.'}</p>
+        <p className="muted">{signup ? 'Your account gets its own inventory, which only you can see.' : 'Track products, stock levels and every movement in one place.'}</p>
 
         {notice && <div className="banner banner--info">{notice}</div>}
         {error && (

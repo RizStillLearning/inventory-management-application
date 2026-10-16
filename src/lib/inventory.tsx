@@ -12,7 +12,7 @@ interface InventoryContextValue {
   suppliersById: Map<string, Supplier>;
   loading: boolean;
   error: unknown;
-  /** Increments whenever data changes (locally or from another user). Views that fetch their own data depend on it. */
+  /** Increments whenever data changes (here or in another window signed in to the same account). Views that fetch their own data depend on it. */
   version: number;
   refresh: () => Promise<void>;
 }
@@ -49,7 +49,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     void refresh();
   }, [refresh]);
 
-  // Live updates: when anyone changes inventory, refetch (debounced so a burst of changes costs one fetch).
+  // Live updates: when this account's inventory changes anywhere, refetch (debounced so a burst of changes costs one fetch).
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = () => {
