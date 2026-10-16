@@ -7,6 +7,8 @@ import { db } from '../lib/supabase';
 
 type Mode = 'signin' | 'signup';
 
+const EMAIL_TAKEN = 'An account with this email already exists. Sign in instead, or use a different email.';
+
 export function AuthScreen() {
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -69,6 +71,9 @@ export function AuthScreen() {
           options: { emailRedirectTo: window.location.protocol.startsWith('http') ? window.location.origin : undefined },
         });
         if (error) throw error;
+        // With "Confirm email" on, Supabase doesn't report an email that already has an account. It
+        // returns a stand-in user with no identities and sends nothing, so check for that here.
+        if (data.user?.identities?.length === 0) return setError(EMAIL_TAKEN);
         if (!data.session) {
           switchMode('signin');
           setPassword('');
@@ -76,8 +81,9 @@ export function AuthScreen() {
         }
       }
     } catch (err) {
-      const message = (err as { message?: string }).message ?? 'Something went wrong.';
-      setError(/invalid login/i.test(message) ? 'Email or password is incorrect.' : message);
+      const { message = 'Something went wrong.', code } = err as { message?: string; code?: string };
+      if (code === 'user_already_exists' || /already registered/i.test(message)) setError(EMAIL_TAKEN);
+      else setError(/invalid login/i.test(message) ? 'Email or password is incorrect.' : message);
     } finally {
       setBusy(false);
     }
@@ -91,7 +97,7 @@ export function AuthScreen() {
           <span>Stockroom</span>
         </div>
         <h1>{signup ? 'Create an account' : 'Sign in'}</h1>
-        <p className="muted">{signup ? 'Everyone who signs up shares the same inventory.' : 'Track products, stock levels and every movement in one place.'}</p>
+        <p className="muted">{signup ? 'Your account gets its own inventory, which only you can see.' : 'Track products, stock levels and every movement in one place.'}</p>
 
         {notice && <div className="banner banner--info">{notice}</div>}
         {error && (
