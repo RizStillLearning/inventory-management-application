@@ -14,6 +14,8 @@ interface Props {
 }
 
 const UNITS = ['pcs', 'box', 'pack', 'case', 'pair', 'set', 'kg', 'g', 'lb', 'l', 'ml', 'm', 'ream', 'roll', 'bottle'];
+/** The Unit dropdown's last option, which swaps it for a text box to type any unit. */
+const OTHER_UNIT = '__other__';
 
 interface Fields {
   name: string;
@@ -69,13 +71,18 @@ export function ProductFormModal({ open, product, onClose }: Props) {
   const [fields, setFields] = useState<Fields>(() => toFields(product));
   const [errors, setErrors] = useState<Errors>({});
   const [saving, setSaving] = useState(false);
+  const [customUnit, setCustomUnit] = useState(false);
 
   useEffect(() => {
     if (open) {
       setFields(toFields(product));
       setErrors({});
+      setCustomUnit(false);
     }
   }, [open, product]);
+
+  // A product saved with a unit that isn't in the list still shows it as the selected option.
+  const unitOptions = !fields.unit || UNITS.includes(fields.unit) ? UNITS : [...UNITS, fields.unit];
 
   const set = (key: keyof Fields) => (e: { target: { value: string } }) =>
     setFields((f) => ({ ...f, [key]: e.target.value }));
@@ -153,13 +160,46 @@ export function ProductFormModal({ open, product, onClose }: Props) {
         <Field label="SKU" error={errors.sku} hint="Unique stock-keeping code">
           <input value={fields.sku} onChange={set('sku')} required maxLength={64} className="mono" />
         </Field>
-        <Field label="Unit" error={errors.unit}>
-          <input value={fields.unit} onChange={set('unit')} list="unit-options" required maxLength={20} />
-          <datalist id="unit-options">
-            {UNITS.map((u) => (
-              <option key={u} value={u} />
-            ))}
-          </datalist>
+        <Field
+          label="Unit"
+          error={errors.unit}
+          hint={
+            customUnit ? (
+              <>
+                Type any unit.{' '}
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => {
+                    setCustomUnit(false);
+                    setFields((f) => ({ ...f, unit: f.unit.trim() || 'pcs' }));
+                  }}
+                >
+                  Choose from list
+                </button>
+              </>
+            ) : undefined
+          }
+        >
+          {customUnit ? (
+            <input value={fields.unit} onChange={set('unit')} autoFocus required maxLength={20} placeholder="e.g. carton" />
+          ) : (
+            <select
+              value={fields.unit}
+              onChange={(e) => {
+                if (e.target.value !== OTHER_UNIT) return set('unit')(e);
+                setCustomUnit(true);
+                setFields((f) => ({ ...f, unit: '' }));
+              }}
+            >
+              {unitOptions.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+              <option value={OTHER_UNIT}>Other…</option>
+            </select>
+          )}
         </Field>
         <Field label="Category">
           <select value={fields.category_id} onChange={set('category_id')}>
@@ -220,7 +260,7 @@ export function Field({
 }: {
   label: string;
   error?: string;
-  hint?: string;
+  hint?: React.ReactNode;
   wide?: boolean;
   children: React.ReactNode;
 }) {
