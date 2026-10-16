@@ -1,6 +1,6 @@
 # Stockroom: inventory management on Supabase
 
-A React + TypeScript single-page app for tracking products, stock levels, and every stock movement. Data lives in Supabase (Postgres + Auth + Realtime). It runs in the browser or as an Electron desktop app (see [Desktop app](#desktop-app)).
+A React + TypeScript single-page app for tracking products, stock levels, and every stock movement. Data lives in Supabase (Postgres + Auth + Realtime). It runs in the browser or as an Electron desktop app. To install the desktop app, see [Install on Ubuntu](#install-on-ubuntu) or [Install on Windows](#install-on-windows).
 
 ## Features
 
@@ -95,29 +95,107 @@ npm run electron:dev
 
 This starts the Vite dev server and opens the app in a desktop window. Changes under `src/` hot-reload in the window. Changes to `electron/main.ts` need a restart: close the window and run the command again.
 
-### Build installers
+### Install the desktop app
 
-```bash
-npm run electron:build
-```
+You build the installer from this repository, then install it on as many computers as you like. Build it on the system it's for: the Ubuntu installer on Ubuntu, the Windows installer on Windows. (On a Mac, the same steps produce a `.dmg` disk image.)
 
-Installers land in `release/`. Build on the system you are targeting:
+Before you start, you need the Supabase project from [Setup](#setup): the database created with `schema.sql`, plus the project URL and publishable key. The installer connects every copy of the app to that project, and each person signs in with their own account.
 
-| Built on | Output |
-|---|---|
-| Linux | `Stockroom-<version>.AppImage` and `inventory-management_<version>_amd64.deb` |
-| Windows | `Stockroom Setup <version>.exe` |
-| macOS | a `Stockroom-<version>…dmg` disk image |
+Already have an installer file from someone who built it? Skip to the install step for your system.
 
-On Ubuntu, install the `.deb` (`sudo apt install ./release/inventory-management_*.deb`). It adds Stockroom to the app launcher and sets up the AppArmor profile that Ubuntu 24.04+ needs for Electron's sandbox. To run the AppImage instead, install FUSE 2 first: `sudo apt install libfuse2t64`.
+The file names below contain the version from `package.json` (`1.0.0` here).
 
-The installers aren't code-signed, so Windows SmartScreen and macOS Gatekeeper warn on first launch. Sign them before handing them to other people.
+### Install on Ubuntu
+
+These steps were written for Ubuntu 24.04 and newer.
+
+1. **Install Git, and check Node.js.** Open a terminal and run:
+
+   ```bash
+   sudo apt update
+   sudo apt install -y git
+   node -v
+   ```
+
+   `node -v` must print `v22.12.0` or newer. If it prints an older version or `command not found`, install Node.js from [nodejs.org/en/download](https://nodejs.org/en/download): pick Linux and nvm, and run the commands the page shows. Ubuntu's own `nodejs` package is often too old.
+
+2. **Get the code and add your Supabase settings.**
+
+   ```bash
+   git clone https://github.com/RizStillLearning/inventory-management-application.git
+   cd inventory-management-application
+   cp .env.example .env
+   nano .env
+   ```
+
+   Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as described in [Connect the app](#3-connect-the-app). Save with Ctrl+O and Enter, then exit with Ctrl+X.
+
+3. **Build the installer.** The first build downloads Electron and the packaging tools, so it takes a few minutes.
+
+   ```bash
+   npm install
+   npm run electron:build
+   ```
+
+   This creates `release/inventory-management_1.0.0_amd64.deb` and `release/Stockroom-1.0.0.AppImage`.
+
+4. **Install it.**
+
+   ```bash
+   sudo apt install ./release/inventory-management_1.0.0_amd64.deb
+   ```
+
+   Keep the `./` at the start: it tells apt to install a file instead of looking the name up online. The package installs into `/opt/Stockroom`, adds Stockroom to the app launcher, and sets up the AppArmor profile that Ubuntu 24.04 and newer need for Electron's sandbox.
+
+5. **Open Stockroom.** Press the Super key, type **Stockroom**, and open it. To keep it in the dock, right-click its icon while it's running and choose **Pin to Dash**. Then sign in, or create an account.
+
+**Without installing:** the AppImage runs from wherever you put it. It needs FUSE 2 (`sudo apt install -y libfuse2t64`; on Ubuntu 22.04 the package is `libfuse2`). Then run `./release/Stockroom-1.0.0.AppImage`. It doesn't add Stockroom to the app launcher.
+
+**Update to a newer version:** in the project folder, run `git pull`, `npm install` and `npm run electron:build`, then install the new `.deb` the same way. If the version number didn't change, add `--reinstall`: `sudo apt install --reinstall ./release/inventory-management_1.0.0_amd64.deb`.
+
+**Uninstall:** `sudo apt remove inventory-management`. Your sign-in stays in `~/.config/Stockroom`; delete that folder to remove it too.
+
+### Install on Windows
+
+These steps are for Windows 10 and 11.
+
+1. **Install the tools.** Download and run the **Node.js** installer (LTS, version 22.12 or newer) from [nodejs.org](https://nodejs.org), and the **Git** installer from [git-scm.com/download/win](https://git-scm.com/download/win). The default options are fine for both.
+
+2. **Open Command Prompt.** Press Start, type **cmd** and open **Command Prompt**. Use Command Prompt rather than PowerShell: PowerShell often refuses to run `npm` with "running scripts is disabled on this system".
+
+3. **Get the code and add your Supabase settings.**
+
+   ```bat
+   git clone https://github.com/RizStillLearning/inventory-management-application.git
+   cd inventory-management-application
+   copy .env.example .env
+   notepad .env
+   ```
+
+   Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as described in [Connect the app](#3-connect-the-app), then save and close Notepad.
+
+4. **Build the installer.** The first build downloads Electron and the packaging tools, so it takes a few minutes.
+
+   ```bat
+   npm install
+   npm run electron:build
+   ```
+
+   This creates `release\Stockroom Setup 1.0.0.exe`.
+
+5. **Install it.** Run `explorer release` to open the folder, then double-click **Stockroom Setup 1.0.0.exe**. The installer isn't code-signed, so Windows SmartScreen may show "Windows protected your PC": click **More info**, then **Run anyway**. Stockroom installs for your Windows user (no administrator rights needed), adds Start menu and desktop shortcuts, and opens.
+
+6. **Sign in**, or create an account.
+
+**Update to a newer version:** in the project folder, run `git pull`, `npm install` and `npm run electron:build`, then run the new installer. It replaces the installed version and keeps your sign-in.
+
+**Uninstall:** open **Settings → Apps → Installed apps** (**Apps & features** on Windows 10), find **Stockroom** and choose **Uninstall**. Your sign-in stays in `%APPDATA%\Stockroom`; delete that folder to remove it too.
 
 ### Things to know
 
 - **`.env` is baked in at build time.** The Supabase URL, key and currency settings are compiled into the app, so rebuild after changing `.env`. Use the publishable/anon key only, as for the web build.
 - **Email confirmation.** A confirmation link opens in the user's browser, not the desktop app. The link still confirms the account, and the user then signs in in the app. To skip this step, turn off **Confirm email** in Supabase. Otherwise, point **Site URL** at a page that makes sense to land on.
-- **Sign-in is remembered** per computer, in the app's data folder (for example `~/.config/Stockroom` on Linux).
+- **Sign-in is remembered** per computer, in the app's data folder: `~/.config/Stockroom` on Linux, `%APPDATA%\Stockroom` on Windows.
 - **Title bar.** The window draws its own title bar with minimize, maximize and close buttons, so they appear even on desktops like GNOME that show only a close button by default. On macOS the usual traffic-light buttons stay on the left. The title bar is a separate page from the app, so the buttons keep working while a dialog is open. Press F11 (or **View → Toggle Full Screen**) for full screen.
 - **Security.** The built app is served from a private `app://stockroom/` origin with a Content Security Policy. Pages have no Node.js access, and links to other sites or `mailto:` open in the system browser or mail app.
 
